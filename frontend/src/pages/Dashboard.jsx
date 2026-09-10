@@ -1,16 +1,32 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bus, ScanLine, Construction, ShieldAlert, TrafficCone, ArrowUpRight, Activity } from 'lucide-react';
+import { Bus, ScanLine, Construction, ShieldAlert, TrafficCone, ArrowUpRight, Activity, Camera, FileCheck2, Send, Building2, Bell, BarChart3, X, Check } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useSimulation } from '../context/SimulationContext';
+import { useViolations } from '../context/ViolationsContext';
+import { useComplaints } from '../context/ComplaintsContext';
 import KPICard from '../components/KPICard';
 import EventFeed from '../components/EventFeed';
 import UrbanMap from '../components/map/UrbanMap';
 import Modal from '../components/Modal';
 import { SeverityBadge } from '../components/Badge';
 
+const IMPACT_STEPS = [
+  { icon: Camera, label: 'AI Detection' },
+  { icon: FileCheck2, label: 'Evidence' },
+  { icon: Send, label: 'Automated Action' },
+  { icon: Building2, label: 'Department Response' },
+  { icon: Bell, label: 'Citizen Notification' },
+  { icon: BarChart3, label: 'Measurable Impact' },
+];
+
+const BEFORE_ITEMS = ['Manual Detection', 'Manual Complaint Filing', 'Manual Follow-up', 'Delayed Resolution'];
+const AFTER_ITEMS = ['AI Detection', 'Automatic Evidence', 'Smart Prioritization', 'Automated Notification', 'Department Assignment', 'Real-time Tracking', 'Citizen Feedback', 'Analytics'];
+
 export default function Dashboard() {
   const { kpis, buses, events, incidents, roadTrafficStats, simulationRunning, congestionTrend } = useSimulation();
+  const { violations } = useViolations();
+  const { complaints } = useComplaints();
   const navigate = useNavigate();
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -64,7 +80,7 @@ export default function Dashboard() {
               <p className="text-xs text-slate-500">{buses.length} buses reporting across 10 routes</p>
             </div>
             <button
-              onClick={() => navigate('/fleet')}
+              onClick={() => navigate('/admin/fleet')}
               className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-cyan-300 transition-colors hover:bg-white/10"
             >
               Full Fleet View <ArrowUpRight size={13} />
@@ -133,6 +149,56 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <div className="glass rounded-2xl p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-white">AI → Action → Impact</h2>
+            <p className="text-xs text-slate-500">From detection to measurable civic outcome — the full closed-loop pipeline.</p>
+          </div>
+          <div className="flex gap-2 text-xs">
+            <button onClick={() => navigate('/admin/detection-studio')} className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 font-medium text-cyan-300 hover:bg-white/10">Run Demo</button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {IMPACT_STEPS.map((s, i) => (
+            <div key={s.label} className="flex items-center gap-2">
+              <div className="flex flex-col items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-center">
+                <s.icon size={16} className="text-cyan-300" />
+                <span className="text-[10px] font-medium text-slate-300">{s.label}</span>
+              </div>
+              {i < IMPACT_STEPS.length - 1 && <ArrowUpRight size={14} className="rotate-45 text-slate-600" />}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <ImpactStat label="Violations Auto-Detected" value={violations.length} />
+          <ImpactStat label="Complaints Routed" value={complaints.length} />
+          <ImpactStat label="Resolved Issues" value={complaints.filter((c) => c.status === 'Resolved').length} />
+          <ImpactStat label="Citizens Notified" value={complaints.filter((c) => c.citizenNotified).length} />
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 border-t border-white/5 pt-5 sm:grid-cols-2">
+          <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-rose-300">Before UrbanSense AI</p>
+            <ul className="space-y-1.5">
+              {BEFORE_ITEMS.map((item) => (
+                <li key={item} className="flex items-center gap-2 text-xs text-slate-400"><X size={12} className="text-rose-400" /> {item}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-300">After UrbanSense AI</p>
+            <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+              {AFTER_ITEMS.map((item) => (
+                <li key={item} className="flex items-center gap-2 text-xs text-slate-400"><Check size={12} className="text-emerald-400" /> {item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
       <Modal open={!!selectedEvent} onClose={() => setSelectedEvent(null)} title={selectedEvent?.type || 'Event Detail'}>
         {selectedEvent && (
           <div className="space-y-3 text-sm">
@@ -148,6 +214,15 @@ export default function Dashboard() {
           </div>
         )}
       </Modal>
+    </div>
+  );
+}
+
+function ImpactStat({ label, value }) {
+  return (
+    <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3 text-center">
+      <p className="text-xl font-bold text-white">{value}</p>
+      <p className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
     </div>
   );
 }

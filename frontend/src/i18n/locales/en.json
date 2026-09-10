@@ -1,0 +1,105 @@
+{
+  "app": { "name": "UrbanSense AI", "tagline": "Smart Traffic & Citizen Road Safety Command Center" },
+  "nav": {
+    "dashboard": "Dashboard",
+    "fleet": "Live Bus Fleet",
+    "roadIntelligence": "Road Intelligence",
+    "trafficAnalytics": "Traffic Analytics",
+    "incidents": "Incident Management",
+    "detectionStudio": "Traffic Monitoring",
+    "violations": "Violations",
+    "vehicles": "Vehicles",
+    "complaints": "Citizen Complaints",
+    "gisMap": "Live Map",
+    "departments": "Departments",
+    "notifications": "Notifications",
+    "analytics": "Analytics",
+    "reports": "Reports & Exports",
+    "settings": "Settings"
+  },
+  "citizenNav": {
+    "home": "Home",
+    "report": "Report an Issue",
+    "track": "Track Complaint",
+    "safety": "Traffic Safety",
+    "help": "Help",
+    "adminLogin": "Admin / Staff Login"
+  },
+  "common": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "download": "Download",
+    "downloadPdf": "Download PDF",
+    "exportCsv": "Export CSV",
+    "generatePdf": "Generate PDF",
+    "print": "Print Report",
+    "search": "Search",
+    "viewDetails": "View Details",
+    "close": "Close",
+    "loading": "Loading...",
+    "noResults": "No results found.",
+    "status": "Status",
+    "priority": "Priority",
+    "location": "Location",
+    "date": "Date",
+    "time": "Time",
+    "back": "Back",
+    "next": "Next",
+    "demoMode": "DEMO MODE",
+    "language": "Language"
+  },
+  "home": {
+    "heroTitle": "Report Road & Traffic Issues in Seconds",
+    "heroSubtitle": "Help us keep Patna's roads safe — report potholes, broken signals and hazards directly to the right department.",
+    "reportCta": "Report an Issue",
+    "trackCta": "Track My Complaint"
+  },
+  "report": {
+    "title": "Report a Road or Traffic Issue",
+    "category": "Issue Category",
+    "description": "Description",
+    "uploadImage": "Upload Image(s)",
+    "uploadVideo": "Upload Video (optional)",
+    "location": "Location",
+    "landmark": "Landmark",
+    "pickOnMap": "Pick on Map",
+    "useMyLocation": "Use My Current Location",
+    "contactOptional": "Contact Information (optional)",
+    "submit": "Submit Complaint",
+    "duplicateWarning": "This issue may already have been reported.",
+    "successTitle": "Complaint Submitted",
+    "successBody": "Thank you — your complaint has been logged and routed for review."
+  },
+  "track": {
+    "title": "Track Your Complaint",
+    "inputLabel": "Enter Complaint ID",
+    "searchButton": "Track",
+    "notFound": "No complaint found with that ID."
+  },
+  "feedback": {
+    "title": "Rate Your Resolution",
+    "question": "Was your complaint resolved satisfactorily?",
+    "yes": "Yes",
+    "partially": "Partially",
+    "no": "No",
+    "ratingLabel": "Rate 1-5 stars",
+    "commentLabel": "Additional comments (optional)",
+    "submit": "Submit Feedback",
+    "thanks": "Thank you for your feedback!"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "role": "Role",
+    "mode": "System Mode",
+    "notificationPrefs": "Notification Preferences"
+  },
+  "languages": {
+    "en": "English",
+    "hi": "हिन्दी",
+    "bn": "বাংলা",
+    "mr": "मराठी",
+    "ta": "தமிழ்",
+    "te": "తెలుగు"
+  }
+}

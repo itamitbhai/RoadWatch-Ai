@@ -1,8 +1,83 @@
 import { useMemo, useState } from 'react';
-import { FileBarChart, Loader2, Sparkles, TrendingUp, Construction, ShieldAlert, TrafficCone } from 'lucide-react';
+import { FileBarChart, Loader2, Sparkles, TrendingUp, Construction, ShieldAlert, TrafficCone, Download, FileText, Printer } from 'lucide-react';
 import { useSimulation } from '../context/SimulationContext';
 import { useToast } from '../context/ToastContext';
+import { useViolations } from '../context/ViolationsContext';
+import { useComplaints } from '../context/ComplaintsContext';
 import { randomInt, pickRandom } from '../data/mockData';
+import { downloadCsv } from '../services/csvService';
+import { generateTablePdf } from '../services/pdfService';
+
+const EXPORT_ENTITIES = {
+  violations: {
+    label: 'Traffic Violations',
+    columns: [
+      { key: 'id', label: 'Violation ID' },
+      { key: 'vehicleNumber', label: 'Vehicle' },
+      { key: 'violationType', label: 'Type' },
+      { key: 'severity', label: 'Severity' },
+      { key: 'status', label: 'Status' },
+      { key: 'location', label: 'Location' },
+      { value: (r) => new Date(r.timestamp).toLocaleString('en-IN'), label: 'Date/Time' },
+    ],
+  },
+  vehicles: {
+    label: 'Vehicle History',
+    columns: [
+      { key: 'plate', label: 'Plate' },
+      { key: 'ownerName', label: 'Owner' },
+      { key: 'vehicleType', label: 'Type' },
+      { key: 'totalViolations', label: 'Total Violations' },
+      { key: 'riskStatus', label: 'Risk' },
+    ],
+  },
+  complaints: {
+    label: 'Citizen Complaints',
+    columns: [
+      { key: 'id', label: 'Complaint ID' },
+      { key: 'category', label: 'Category' },
+      { key: 'priority', label: 'Priority' },
+      { key: 'status', label: 'Status' },
+      { key: 'department', label: 'Department' },
+      { key: 'location', label: 'Location' },
+      { value: (r) => new Date(r.submittedAt).toLocaleString('en-IN'), label: 'Submitted' },
+    ],
+  },
+  resolvedComplaints: {
+    label: 'Resolved Complaints',
+    source: 'complaints',
+    filter: (c) => c.status === 'Resolved',
+    columns: [
+      { key: 'id', label: 'Complaint ID' },
+      { key: 'category', label: 'Category' },
+      { key: 'department', label: 'Department' },
+      { value: (r) => (r.resolution ? new Date(r.resolution.resolvedAt).toLocaleString('en-IN') : '—'), label: 'Resolved At' },
+      { value: (r) => r.resolution?.notes || '', label: 'Resolution Notes' },
+    ],
+  },
+  pendingComplaints: {
+    label: 'Pending Complaints',
+    source: 'complaints',
+    filter: (c) => !['Resolved', 'Rejected'].includes(c.status),
+    columns: [
+      { key: 'id', label: 'Complaint ID' },
+      { key: 'category', label: 'Category' },
+      { key: 'status', label: 'Status' },
+      { key: 'priority', label: 'Priority' },
+      { key: 'department', label: 'Department' },
+    ],
+  },
+  departmentPerformance: {
+    label: 'Department Performance',
+    columns: [
+      { key: 'name', label: 'Department' },
+      { key: 'total', label: 'Total Assigned' },
+      { key: 'resolved', label: 'Resolved' },
+      { key: 'overdue', label: 'Overdue' },
+      { key: 'avgHours', label: 'Avg. Resolution (h)' },
+    ],
+  },
+};
 
 function buildInsights({ events, incidents, roadTrafficStats, buses }) {
   const insights = [];
@@ -24,9 +99,61 @@ function buildInsights({ events, incidents, roadTrafficStats, buses }) {
 export default function Reports() {
   const sim = useSimulation();
   const { push } = useToast();
+  const { violations, vehicles } = useViolations();
+  const { complaints, departments } = useComplaints();
   const [insights, setInsights] = useState(() => buildInsights(sim));
   const [generating, setGenerating] = useState(false);
   const [lastGenerated, setLastGenerated] = useState(new Date());
+  const [exportEntity, setExportEntity] = useState('violations');
+  const [exportBusy, setExportBusy] = useState('');
+
+  const exportDatasets = {
+    violations,
+    vehicles,
+    complaints,
+    departmentPerformance: departments.map((d) => {
+      const deptComplaints = complaints.filter((c) => c.department === d.name);
+      const resolved = deptComplaints.filter((c) => c.status === 'Resolved' && c.resolution);
+      const overdue = deptComplaints.filter((c) => !['Resolved', 'Rejected'].includes(c.status));
+      const avgHours = resolved.length
+        ? Math.round(resolved.reduce((s, c) => s + (c.resolution.resolvedAt - c.assignedAt) / 3600000, 0) / resolved.length)
+        : 0;
+      return { name: d.name, total: deptComplaints.length, resolved: resolved.length, overdue: overdue.length, avgHours };
+    }),
+  };
+
+  function rowsFor(entityKey) {
+    const config = EXPORT_ENTITIES[entityKey];
+    const sourceKey = config.source || entityKey;
+    const rows = exportDatasets[sourceKey] || [];
+    return config.filter ? rows.filter(config.filter) : rows;
+  }
+
+  async function handleExportCsv() {
+    const config = EXPORT_ENTITIES[exportEntity];
+    setExportBusy('csv');
+    try {
+      downloadCsv(config.label, rowsFor(exportEntity), config.columns);
+      push({ title: 'CSV Export Ready', message: `${config.label} exported successfully.`, variant: 'success' });
+    } catch {
+      push({ title: 'Export Failed', message: 'Could not generate CSV file.', variant: 'danger' });
+    } finally {
+      setExportBusy('');
+    }
+  }
+
+  async function handleExportPdf() {
+    const config = EXPORT_ENTITIES[exportEntity];
+    setExportBusy('pdf');
+    try {
+      await generateTablePdf({ title: config.label, subtitle: `Generated ${new Date().toLocaleString('en-IN')}`, columns: config.columns, rows: rowsFor(exportEntity) });
+      push({ title: 'PDF Report Generated', message: `${config.label} report downloaded.`, variant: 'success' });
+    } catch {
+      push({ title: 'Export Failed', message: 'Could not generate PDF report.', variant: 'danger' });
+    } finally {
+      setExportBusy('');
+    }
+  }
 
   const summary = useMemo(() => {
     const roadEvents = sim.events.filter((e) => e.category === 'road');
@@ -141,6 +268,50 @@ export default function Reports() {
               <p className="text-sm text-slate-300">{line}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="glass rounded-2xl p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <Download size={17} className="text-cyan-400" />
+          <h2 className="font-semibold text-white">Export Center</h2>
+        </div>
+        <p className="mb-4 text-xs text-slate-500">Export any dataset below as CSV or a formatted PDF report.</p>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={exportEntity}
+            onChange={(e) => setExportEntity(e.target.value)}
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-200 outline-none focus:border-cyan-500/40"
+          >
+            {Object.entries(EXPORT_ENTITIES).map(([key, cfg]) => (
+              <option key={key} value={key}>{cfg.label}</option>
+            ))}
+          </select>
+          <span className="text-xs text-slate-500">{rowsFor(exportEntity).length} records</span>
+
+          <div className="ml-auto flex gap-2">
+            <button
+              onClick={handleExportCsv}
+              disabled={!!exportBusy}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-50"
+            >
+              {exportBusy === 'csv' ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Export CSV
+            </button>
+            <button
+              onClick={handleExportPdf}
+              disabled={!!exportBusy}
+              className="flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-2.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 disabled:opacity-50"
+            >
+              {exportBusy === 'pdf' ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} Generate PDF
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/10"
+            >
+              <Printer size={14} /> Print Report
+            </button>
+          </div>
         </div>
       </div>
     </div>

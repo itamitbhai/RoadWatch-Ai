@@ -39,7 +39,7 @@ export default function BusMonitor() {
     return (
       <div className="glass rounded-2xl p-12 text-center">
         <p className="text-slate-300">Bus {busId} not found or offline.</p>
-        <button onClick={() => navigate('/fleet')} className="mt-4 rounded-lg bg-cyan-500/15 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/25">
+        <button onClick={() => navigate('/admin/fleet')} className="mt-4 rounded-lg bg-cyan-500/15 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/25">
           Back to Fleet
         </button>
       </div>
@@ -56,7 +56,7 @@ export default function BusMonitor() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/fleet')} className="rounded-lg border border-white/10 bg-white/5 p-2 text-slate-300 hover:bg-white/10">
+          <button onClick={() => navigate('/admin/fleet')} className="rounded-lg border border-white/10 bg-white/5 p-2 text-slate-300 hover:bg-white/10">
             <ArrowLeft size={16} />
           </button>
           <div>

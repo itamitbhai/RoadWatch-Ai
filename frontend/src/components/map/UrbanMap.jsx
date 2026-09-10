@@ -2,7 +2,8 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from 'react-
 import 'leaflet/dist/leaflet.css';
 import { buildIcon } from './mapIcons';
 import { CITY_CENTER } from '../../data/mockData';
-import { SeverityBadge } from '../Badge';
+import { SeverityBadge, PriorityBadge, StatusBadge } from '../Badge';
+import { buildHotspots } from '../../utils/geo';
 
 function congestionColor(density) {
   if (density >= 80) return '#ef4444';
@@ -17,14 +18,18 @@ export default function UrbanMap({
   incidents = [],
   ambulances = [],
   dispatches = [],
+  violations = [],
+  complaints = [],
   showBuses = true,
   showHeatmap = false,
+  showHotspots = false,
   roadTrafficStats = [],
   height = '480px',
   zoom = 13,
   center = CITY_CENTER,
   onSelect,
 }) {
+  const hotspots = showHotspots ? buildHotspots([...violations, ...complaints], 3) : [];
   return (
     <div style={{ height }} className="overflow-hidden rounded-2xl border border-white/10">
       <MapContainer center={center} zoom={zoom} scrollWheelZoom style={{ height: '100%', width: '100%' }}>
@@ -98,6 +103,48 @@ export default function UrbanMap({
                 <p className="font-bold text-rose-300">{amb.id}</p>
                 <p className="text-xs text-slate-300">{amb.name}</p>
                 <p className="text-xs text-slate-400">Status: {amb.status}</p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {showHotspots &&
+          hotspots.map((h) => (
+            <Circle
+              key={`hotspot-${h.coords[0]}-${h.coords[1]}`}
+              center={h.coords}
+              radius={140 + h.count * 90}
+              pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: Math.min(0.5, 0.15 + h.count * 0.08), weight: 1, opacity: 0.5 }}
+            />
+          ))}
+
+        {violations.map((v) => (
+          <Marker key={v.id} position={v.coords} icon={buildIcon(v.violationType, { pulse: v.status === 'Pending' })} eventHandlers={{ click: () => onSelect?.({ kind: 'violation', data: v }) }}>
+            <Popup>
+              <div className="min-w-45 space-y-1.5 font-sans">
+                <p className="font-bold text-white">{v.violationType}</p>
+                <SeverityBadge severity={v.severity} />
+                <p className="text-xs text-slate-400">Vehicle: {v.vehicleNumber}</p>
+                <p className="text-xs text-slate-400">Confidence: {v.confidence}%</p>
+                <p className="text-xs text-slate-400">Location: {v.location}</p>
+                <p className="text-xs text-slate-500">{new Date(v.timestamp).toLocaleString('en-IN')}</p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {complaints.map((c) => (
+          <Marker key={c.id} position={c.coords} icon={buildIcon(c.category, { pulse: c.status !== 'Resolved' })} eventHandlers={{ click: () => onSelect?.({ kind: 'complaint', data: c }) }}>
+            <Popup>
+              <div className="min-w-50 space-y-1.5 font-sans">
+                <p className="font-bold text-white">{c.category}</p>
+                <div className="flex gap-1.5">
+                  <PriorityBadge priority={c.priority} />
+                  <StatusBadge status={c.status} />
+                </div>
+                <p className="text-xs text-slate-400">{c.id}</p>
+                <p className="text-xs text-slate-400">Location: {c.location}</p>
+                <p className="text-xs text-slate-500">{new Date(c.submittedAt).toLocaleString('en-IN')}</p>
               </div>
             </Popup>
           </Marker>

@@ -15,6 +15,26 @@ const CATEGORY_META = {
   Accident: { emoji: '🚨', color: '#ef4444' },
   'Road Hazard': { emoji: '⚠️', color: '#ef4444' },
   Ambulance: { emoji: '🚑', color: '#f43f5e' },
+  // Violations
+  'Helmet Violation': { emoji: '🪖', color: '#f97316' },
+  'Triple Riding': { emoji: '🏍️', color: '#f97316' },
+  'Red Light Violation': { emoji: '🚥', color: '#ef4444' },
+  'Wrong-Side Driving': { emoji: '↩️', color: '#ef4444' },
+  'Over-Speeding': { emoji: '💨', color: '#ef4444' },
+  'No Seatbelt': { emoji: '🔒', color: '#f97316' },
+  'Illegal Parking': { emoji: '🅿️', color: '#eab308' },
+  'Number Plate Violation': { emoji: '🔢', color: '#f97316' },
+  'Signal Jumping': { emoji: '🚦', color: '#ef4444' },
+  'Using Phone While Driving': { emoji: '📱', color: '#f97316' },
+  // Citizen complaint categories
+  'Broken Street Light': { emoji: '💡', color: '#eab308' },
+  'Missing/Damaged Traffic Sign': { emoji: '🛑', color: '#eab308' },
+  'Road Obstruction': { emoji: '🚧', color: '#f97316' },
+  'Traffic Signal Malfunction': { emoji: '🚦', color: '#ef4444' },
+  'Garbage on Road': { emoji: '🗑️', color: '#84cc16' },
+  'Accident-Prone Location': { emoji: '⚠️', color: '#ef4444' },
+  'Broken Footpath': { emoji: '🚶', color: '#eab308' },
+  'Road Marking Problem': { emoji: '➰', color: '#eab308' },
 };
 
 export function getCategoryMeta(type) {

@@ -7,7 +7,7 @@ export default function BusCard({ bus }) {
 
   return (
     <button
-      onClick={() => navigate(`/fleet/${bus.id}`)}
+      onClick={() => navigate(`/admin/fleet/${bus.id}`)}
       className="group glass w-full rounded-2xl p-4 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-500/30 hover:shadow-[0_0_24px_-8px_rgba(34,211,238,0.35)]"
     >
       <div className="flex items-center justify-between">

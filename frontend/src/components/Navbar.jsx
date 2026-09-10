@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bell, Menu, Play, Radio, Satellite, UserCircle2 } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Bell, Globe2, LogIn, LogOut, Mail, Menu, Play, Radio, Satellite, UserCircle2 } from 'lucide-react';
 import { useSimulation } from '../context/SimulationContext';
+import { useAuth } from '../context/AuthContext';
+import { useNotificationCenter } from '../context/NotificationCenterContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 function useClock() {
   const [now, setNow] = useState(new Date());
@@ -14,12 +18,18 @@ function useClock() {
 export default function Navbar({ onMenuClick }) {
   const now = useClock();
   const { simulationRunning, toggleSimulation, events } = useSimulation();
+  const { user, logout } = useAuth();
+  const { notifications, unreadCount } = useNotificationCenter();
+  const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [centerOpen, setCenterOpen] = useState(false);
   const notifRef = useRef(null);
+  const centerRef = useRef(null);
 
   useEffect(() => {
     function onClick(e) {
       if (notifRef.current && !notifRef.current.contains(e.target)) setNotifOpen(false);
+      if (centerRef.current && !centerRef.current.contains(e.target)) setCenterOpen(false);
     }
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -33,7 +43,7 @@ export default function Navbar({ onMenuClick }) {
         <Menu size={20} />
       </button>
 
-      <div className="flex items-center gap-3">
+      <Link to="/admin" className="flex items-center gap-3">
         <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20">
           <Satellite size={18} className="text-white" />
           <span className="absolute -right-1 -top-1 h-2.5 w-2.5 animate-pulse-slow rounded-full bg-emerald-400 ring-2 ring-base-950" />
@@ -42,7 +52,7 @@ export default function Navbar({ onMenuClick }) {
           <p className="text-glow-cyan text-base font-bold leading-none tracking-tight text-white">UrbanSense AI</p>
           <p className="mt-0.5 text-[11px] leading-none text-slate-400">Urban Intelligence Command Center</p>
         </div>
-      </div>
+      </Link>
 
       <div className="mx-2 hidden h-8 w-px bg-white/10 md:block" />
 
@@ -103,12 +113,62 @@ export default function Navbar({ onMenuClick }) {
         )}
       </div>
 
+      <div className="relative" ref={centerRef}>
+        <button
+          onClick={() => setCenterOpen((v) => !v)}
+          className="relative rounded-lg p-2 text-slate-300 transition-colors hover:bg-white/5"
+          title="Notification Center"
+        >
+          <Mail size={19} />
+          {unreadCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-cyan-500 px-1 text-[9px] font-bold text-black">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </button>
+        {centerOpen && (
+          <div className="glass-strong animate-fade-in absolute right-0 top-12 w-80 rounded-xl p-2 shadow-2xl shadow-black/50">
+            <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">Notification Center</p>
+            <div className="max-h-72 space-y-1 overflow-y-auto thin-scroll">
+              {notifications.slice(0, 8).map((n) => (
+                <div key={n.id} className="rounded-lg px-2 py-2 hover:bg-white/5">
+                  <p className="text-xs font-medium text-slate-200">{n.type} · {n.channel}</p>
+                  <p className="truncate text-[11px] text-slate-500">{n.subject || n.message}</p>
+                </div>
+              ))}
+              {notifications.length === 0 && <p className="px-2 py-3 text-center text-xs text-slate-500">No notifications yet.</p>}
+            </div>
+            <button onClick={() => { setCenterOpen(false); navigate('/admin/notifications'); }} className="mt-1 w-full rounded-lg px-2 py-1.5 text-center text-xs font-semibold text-cyan-300 hover:bg-white/5">
+              View all
+            </button>
+          </div>
+        )}
+      </div>
+
+      <Link
+        to="/"
+        className="hidden items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 sm:flex"
+      >
+        <Globe2 size={14} /> Public Citizen Site
+      </Link>
+
+      <LanguageSwitcher compact />
+
       <div className="ml-1 flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5">
         <UserCircle2 size={22} className="text-slate-300" />
         <div className="hidden leading-none xl:block">
-          <p className="text-xs font-semibold text-slate-200">Admin</p>
-          <p className="text-[10px] text-slate-500">Transport Dept.</p>
+          <p className="text-xs font-semibold text-slate-200">{user?.name || 'Admin'}</p>
+          <p className="text-[10px] text-slate-500">{user?.role || 'Transport Dept.'}</p>
         </div>
+        {user ? (
+          <button onClick={logout} title="Sign out" className="ml-1 rounded-md p-1 text-slate-400 hover:bg-white/10 hover:text-white">
+            <LogOut size={14} />
+          </button>
+        ) : (
+          <button onClick={() => navigate('/login')} title="Sign in" className="ml-1 rounded-md p-1 text-slate-400 hover:bg-white/10 hover:text-white">
+            <LogIn size={14} />
+          </button>
+        )}
       </div>
     </header>
   );
